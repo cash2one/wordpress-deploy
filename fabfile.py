@@ -5,6 +5,7 @@ Notes:
     -Tested on Ubuntu 14.04LTS.
 """
 from fabric.api import env, sudo, run, cd, put
+from fabric.contrib.files import exists
 
 env.use_ssh_config = True
 
@@ -75,8 +76,12 @@ def setup_nginx():
     """
     Sets up nginx to server wordpress site.
     """
-    put
-    pass
+    put(
+        "./nginx/sites-available/site_name",
+        "%s/sites-available/" % env.NGINX_ROOT, use_sudo=True)
+    if not exists('%s/sites-enabled/%s' % (env.NGINX_ROOT, env.SITENAME)):
+        sudo('ln -s {0}/sites-available/{1} {0}/sites-enabled/{1}'.
+             format(env.NGINX_ROOT, env.SITENAME))
 
 
 def install_mysql(db_root_pwd):
@@ -136,7 +141,17 @@ def setup_wordpress():
     with cd(env.TMP_DIR):
         run("wget {0}".format(env.WORDPRESS_DWNLD_LINK))
         run("tar xzvf latest.tar.gz")
-        run("cd ./wordpress; cp wp-config-sample.php wp-config.php")
+        run(
+            """
+            cd ./wordpress
+            cp wp-config-sample.php wp-config.php
+            sed  -i 's/database_name_here/{0}/g' wp-config.php
+            sed  -i 's/username_here/{1}/g' wp-config.php
+            sed  -i 's/password_here/{1}/g' wp-config.php
+            """.format(
+                env.db_name, env.db_user, env.db_user_pwd
+            )
+        )
         sudo("cp -rf wordpress /var/www/%s" % env.SITENAME)
         sudo("chown -R www-data /var/www/%s" % env.SITENAME)
 
@@ -146,13 +161,17 @@ def setup_plugin_dropbox_backup():
     Automates the install and server setup for the
     dropbox back up plugin.
     """
-    pass
-
-
-def setup_box(sitename):
-    """
-    Setups up the env for an wordpress install.
-    """
-    env.SITENAME = sitename
-    setup_core()
-    setup_wordpress()
+    plugin_name = "wordpress-backup-to-dropbox"
+    download_link = "https://downloads.wordpress.org/plugin/" +\
+        "%s.zip" % plugin_name
+    # Install needed packages if not present.
+    sudo(PKG_SETUP_CMD.format("curl libcurl3 libcurl3-dev php5-curl"))
+    with cd(env.TMP_DIR):
+        run("wget %s" % download_link)
+        run("unzip %s.zip" % plugin_name)
+        sudo("mkdir -p /var/www/{1}/wp-content/backups")
+        sudo("cp -rf {0} /var/www/{1}/wp-content/plugins".format(
+            plugin_name, env.SITENAME)
+        )
+        sudo("chgrp -R www-data /var/www/%s/wp-content" %
+             env.SITENAME)
