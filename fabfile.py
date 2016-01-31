@@ -2,7 +2,7 @@
 Deploys a fresh wordpress install served by nginx + php5-fpm.
 Notes:
     -Intended for servers running Ubuntu.
-    -Tested on Ubuntu 14.04LTS.
+    -Tested on Ubuntu 14.04 LTS.
 """
 from fabric.api import env, sudo, run, cd, put
 from fabric.contrib.files import exists
@@ -84,11 +84,11 @@ def setup_nginx():
              format(env.NGINX_ROOT, env.SITENAME))
 
 
-def install_mysql(db_root_pwd):
+def install_mysql():
     """
     Install secure mysql
     """
-    sudo(INSTALL_MYSQL.format(db_root_pwd))
+    sudo(INSTALL_MYSQL.format(env.db_root_pwd))
 
 
 def db(cmd):
@@ -115,7 +115,7 @@ def db_purge(usr, pwd, db_name):
     )
 
 
-def db_setup(root_usr, root_pwd, db_name, usr, usr_pwd):
+def db_setup():
     """
     Sets up
     """
@@ -128,7 +128,8 @@ def db_setup(root_usr, root_pwd, db_name, usr, usr_pwd):
             "GRANT ALL PRIVILEGES ON {2}.* {3}@localhost"
         mysql -u {0} -p"{1}" -e"FLUSH PRIVILEGES"
         """.format(
-            root_usr, root_pwd, db_name, usr, usr_pwd),
+            "root", env.db_root_pwd, env.db_name, env.db_user,
+            env.db_user_pwd),
     )
 
 
