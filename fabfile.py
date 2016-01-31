@@ -10,7 +10,7 @@ from fabric.contrib.files import exists
 env.use_ssh_config = True
 
 # Site name - to be set from command line arg.
-env.SITENAME = None
+env.site_name = None
 
 # Database Constants.
 env.db_name = None
@@ -74,14 +74,23 @@ def setup_php_fpm():
 
 def setup_nginx():
     """
-    Sets up nginx to server wordpress site.
+    Sets up nginx to serve wordpress site.
     """
     put(
         "./nginx/sites-available/site_name",
         "%s/sites-available/" % env.NGINX_ROOT, use_sudo=True)
-    if not exists('%s/sites-enabled/%s' % (env.NGINX_ROOT, env.SITENAME)):
+    sudo(
+        """
+        cd {0}/sites-available;
+        sed  -i 's/\@\@SITENAME\@\@/{1}/g' site_name
+        mv {0}/sites-available/site_name {0}/sites-available/{1}
+        """.format(
+            env.NGINX_ROOT, env.site_name
+        )
+    )
+    if not exists('%s/sites-enabled/%s' % (env.NGINX_ROOT, env.site_name)):
         sudo('ln -s {0}/sites-available/{1} {0}/sites-enabled/{1}'.
-             format(env.NGINX_ROOT, env.SITENAME))
+             format(env.NGINX_ROOT, env.site_name))
 
 
 def install_mysql():
@@ -153,8 +162,8 @@ def setup_wordpress():
                 env.db_name, env.db_user, env.db_user_pwd
             )
         )
-        sudo("cp -rf wordpress /var/www/%s" % env.SITENAME)
-        sudo("chown -R www-data /var/www/%s" % env.SITENAME)
+        sudo("cp -rf wordpress /var/www/%s" % env.site_name)
+        sudo("chown -R www-data /var/www/%s" % env.site_name)
 
 
 def setup_plugin_dropbox_backup():
@@ -172,7 +181,7 @@ def setup_plugin_dropbox_backup():
         run("unzip %s.zip" % plugin_name)
         sudo("mkdir -p /var/www/{1}/wp-content/backups")
         sudo("cp -rf {0} /var/www/{1}/wp-content/plugins".format(
-            plugin_name, env.SITENAME)
+            plugin_name, env.site_name)
         )
         sudo("chgrp -R www-data /var/www/%s/wp-content" %
-             env.SITENAME)
+             env.site_name)
