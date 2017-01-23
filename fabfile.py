@@ -61,9 +61,7 @@ def setup_core():
     # build essentials + git
     sudo(PKG_SETUP_CMD.format("build-essential python-dev unzip"))
     sudo(PKG_SETUP_CMD.format("nginx"))
-    sudo(PKG_SETUP_CMD.format("php5-gd libssh2-php"))
-    sudo(PKG_SETUP_CMD.format("php5-fpm"))
-    sudo(PKG_SETUP_CMD.format("php5-mysqlnd-ms"))
+    sudo(PKG_SETUP_CMD.format("php-fpm php-mysql"))
 
 
 def setup_php_fpm():
@@ -146,7 +144,7 @@ def db_setup(
 
 def setenv(**kwargs):
     for key, val in kwargs.items():
-        print "Setting env var %s to %s" % (key, val)
+        print("Setting env var %s to %s" % (key, val))
         env[key] = val
 
 
