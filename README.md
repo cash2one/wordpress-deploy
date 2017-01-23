@@ -14,12 +14,12 @@ To fresh install mysql:
 
 To setup wordpress site mysql db:
 
-    fab -H angel@do-small-3 setenv:db_name=DBNAME,db_root_pwd=DBROOTPWD\
+    fab -H user@host setenv:db_name=DBNAME,db_root_pwd=DBROOTPWD\
         db_user=DBUSER,db_user_pwd=DBPWD db_setup
 
 Wordpress + nginx setup:
 
-    fab -H angel@do-small-3 setenv:db_name=DBNAME,\
+    fab -H user@host setenv:db_name=DBNAME,\
         db_user=DBUSER,db_user_pwd=DBPWD,site_name=SITENAME,\
         nginx_root=NGINX_ROOT setup_wordpress setup_nginx
         
